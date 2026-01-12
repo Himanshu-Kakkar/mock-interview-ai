@@ -9,9 +9,10 @@ export default defineSchema({
     }),
 
     InterviewSessionTable:defineTable({
+        
         interviewQuestions: v.any(),
         resumeUrl: v.string(),
-        userId: v.id('userTable'),
+        userId: v.id('UserTable'),
         status: v.string()
 
     })

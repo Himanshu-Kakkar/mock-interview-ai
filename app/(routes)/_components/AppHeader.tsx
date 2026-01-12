@@ -27,6 +27,7 @@ function AppHeader() {
         <div>
             <ul className='flex gap-5'>
                 {MenuOption.map((option, index)=> (
+                    //@ts-ignore
                     <li className='text-lg hover:scale-105 transition-all cursor-pointer'>{option.name}</li>
                 ))}    
             </ul>   

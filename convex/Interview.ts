@@ -3,11 +3,11 @@ import { v } from "convex/values";
 
 export const SaveInterviewQuestion = mutation({
     args: {
-        question: v.any(),
-        uid: v.id('Usertable'),
+        questions: v.any(),
+        uid: v.id('UserTable'),
         resumeUrl: v.string()
     },
-    handler: async (convexToJson, args) => {
+    handler: async (ctx, args) => {
         const result = await ctx.db.insert('InterviewSessionTable', {
             interviewQuestions: args.questions,
             resumeUrl: args.resumeUrl,
