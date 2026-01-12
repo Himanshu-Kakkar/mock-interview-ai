@@ -6,5 +6,13 @@ export default defineSchema({
         name: v.string(),
         imageUrl: v.string(),
         email: v.string(),
+    }),
+
+    InterviewSessionTable:defineTable({
+        interviewQuestions: v.any(),
+        resumeUrl: v.string(),
+        userId: v.id('userTable'),
+        status: v.string()
+
     })
 })

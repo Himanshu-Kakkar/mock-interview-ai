@@ -35,7 +35,10 @@ export async function POST(req: NextRequest) {
         );
         console.log(result.data);
 
-        return NextResponse.json(result.data, {status: 200});
+        return NextResponse.json({
+            questions: result.data?.questions,
+            resumeUrl: uploadResponse?.url
+        });
     } catch (error: any) {
         console.error('Upload error:', error);
         return NextResponse.json({error: error.message }, { status: 500})
