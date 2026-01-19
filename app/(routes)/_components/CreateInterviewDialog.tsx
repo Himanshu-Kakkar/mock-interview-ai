@@ -19,6 +19,8 @@ import { Loader2Icon } from 'lucide-react'
 import { useMutation } from 'convex/react'
 import { api } from '@/convex/_generated/api'
 import { UserDetailContext } from '@/context/UserDetailContext'
+import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 
 function CreateInterviewDialog() {
   const [formData, setFormData] = useState<any>();
@@ -26,6 +28,7 @@ function CreateInterviewDialog() {
   const [loading, setLoading] = useState(false);
   const {userDetail, setUserDetail} = useContext(UserDetailContext);
   const saveInterviewQuestion = useMutation(api.Interview.SaveInterviewQuestion);
+  const router = useRouter();
 
   const onHandleInputChange = (field: string, value: string) =>{
     setFormData((prev:any) => ({
@@ -34,23 +37,48 @@ function CreateInterviewDialog() {
     }))
   }
   const onSubmit = async () => {
-    if(!file) return;
+    const hasFile = !!file;
+    const hasJobDetails = !!formData?.jobTitle && !!formData?.jobDescription;
+
+    // Require either a resume file OR both job title and job description
+    if (!hasFile && !hasJobDetails) {
+      console.log('Please upload a resume or provide both job title and description.');
+      return;
+    }
+
     setLoading(true);
-    const formData = new FormData();
-    formData.append('file', file);
+    const formData_ = new FormData();
+    if (hasFile && file) {
+      formData_.append('file', file);
+    }
+    if (hasJobDetails) {
+      formData_.append('jobTitle', formData?.jobTitle);
+      formData_.append('jobDescription', formData?.jobDescription);
+    }
+
     try{
-      const res = await axios.post('/api/generate-interview-questions', formData);
+      // Call our Next.js API route, which forwards to the n8n webhook
+      const res = await axios.post('/api/generate-interview-questions', formData_);
       console.log(res.data);
+
+      if(res?.data?.status == 429){
+        toast.warning(res?.data?.result);
+        console.log(res?.data?.result);
+        return;
+      }
+
       // save to DB
       //@ts-ignore
-      const resp = await saveInterviewQuestion ({
+      const interviewId = await saveInterviewQuestion ({
         questions: res.data?.questions,
-        resumeUrl: res?.data.resumeUrl,
+        resumeUrl: res?.data.resumeUrl ?? '',
         uid: userDetail?._id,
         // status: "generated",
+        jobTitle: formData?.jobTitle ?? '',
+        jobDescription: formData?.jobDescription ?? '',
       })
-      console.log(resp);
-      
+      // console.log(resp);
+      router.push('/interview/' + interviewId);
     }catch(e){
       console.log(e);
     }finally{
@@ -82,7 +110,13 @@ function CreateInterviewDialog() {
             <DialogClose>
               <Button variant={'ghost'}>Cancel</Button>
             </DialogClose>
-            <Button onClick={onSubmit} disabled = {loading || !file}>
+            <Button
+              onClick={onSubmit}
+              disabled={
+                loading ||
+                (!file && !(formData?.jobTitle && formData?.jobDescription))
+              }
+            >
               {loading && <Loader2Icon className='animate-spin'/>} Submit</Button>
         </DialogFooter>
     </DialogContent>
